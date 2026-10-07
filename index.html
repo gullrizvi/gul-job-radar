@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Gul Job Radar</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            background: #f5f7fb;
+            color: #172033;
+            line-height: 1.5;
+        }
+
+        header {
+            background: #172033;
+            color: white;
+            padding: 28px 40px;
+        }
+
+        header h1 {
+            font-size: 30px;
+            margin-bottom: 5px;
+        }
+
+        header p {
+            color: #cbd3e1;
+        }
+
+        main {
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 0 24px;
+        }
+
+        .hero {
+            margin-bottom: 30px;
+        }
+
+        .hero h2 {
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+
+        .hero p {
+            color: #667085;
+        }
+
+        .profile-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 18px;
+            margin: 25px 0 40px;
+        }
+
+        .profile-card {
+            background: white;
+            padding: 22px;
+            border-radius: 14px;
+            border: 1px solid #e4e7ec;
+        }
+
+        .profile-card .label {
+            font-size: 13px;
+            color: #667085;
+            margin-bottom: 8px;
+        }
+
+        .profile-card .value {
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .section-title {
+            font-size: 22px;
+            margin-bottom: 18px;
+        }
+
+        .job-card {
+            background: white;
+            border: 1px solid #e4e7ec;
+            border-radius: 14px;
+            padding: 24px;
+            margin-bottom: 16px;
+        }
+
+        .job-card h3 {
+            font-size: 20px;
+            margin-bottom: 6px;
+        }
+
+        .company {
+            color: #667085;
+            margin-bottom: 15px;
+        }
+
+        .tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 18px;
+        }
+
+        .tag {
+            background: #eef2ff;
+            padding: 6px 10px;
+            border-radius: 20px;
+            font-size: 13px;
+        }
+
+        .empty {
+            text-align: center;
+            padding: 50px 20px;
+            background: white;
+            border: 1px dashed #cbd3e1;
+            border-radius: 14px;
+            color: #667085;
+        }
+
+        .empty strong {
+            display: block;
+            color: #172033;
+            font-size: 18px;
+            margin-bottom: 8px;
+        }
+
+        footer {
+            text-align: center;
+            padding: 40px;
+            color: #98a2b3;
+            font-size: 13px;
+        }
+
+        @media (max-width: 800px) {
+            .profile-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 500px) {
+            .profile-grid {
+                grid-template-columns: 1fr;
+            }
+
+            header {
+                padding: 24px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<header>
+    <h1>🌎 Gul Job Radar</h1>
+    <p>Your personal AI-powered remote job finder</p>
+</header>
+
+<main>
+
+    <section class="hero">
+        <h2>Find the jobs worth applying for.</h2>
+
+        <p>
+            Fresh remote and international opportunities,
+            matched against your experience, preferences and income target.
+        </p>
+    </section>
+
+
+    <section class="profile-grid">
+
+        <div class="profile-card">
+            <div class="label">Monthly Target</div>
+            <div class="value">$2,500–$3,000+</div>
+        </div>
+
+        <div class="profile-card">
+            <div class="label">Preferred Currency</div>
+            <div class="value">USD · GBP · EUR</div>
+        </div>
+
+        <div class="profile-card">
+            <div class="label">Location</div>
+            <div class="value">Global Remote</div>
+        </div>
+
+        <div class="profile-card">
+            <div class="label">Seniority</div>
+            <div class="value">Any Level</div>
+        </div>
+
+    </section>
+
+
+    <section>
+
+        <h2 class="section-title">🔥 Today's Matches</h2>
+
+        <div class="empty">
+
+            <strong>Job Radar is being built.</strong>
+
+            Your automated job collector will appear here soon.
+
+            <br><br>
+
+            It will search for:
+            
+            <br>
+
+            Marketing · Communications · Digital · Growth · Partnerships ·
+            Fundraising · Content · Brand
+
+        </div>
+
+    </section>
+
+
+    <section style="margin-top: 40px;">
+
+        <h2 class="section-title">🎯 Preferred Sectors</h2>
+
+        <div class="tags">
+
+            <span class="tag">NGOs</span>
+            <span class="tag">INGOs</span>
+            <span class="tag">International Development</span>
+            <span class="tag">Environment</span>
+            <span class="tag">Conservation</span>
+            <span class="tag">Healthcare</span>
+            <span class="tag">Education</span>
+            <span class="tag">Technology</span>
+            <span class="tag">Fintech</span>
+            <span class="tag">Foundations</span>
+            <span class="tag">International Organisations</span>
+
+        </div>
+
+    </section>
+
+</main>
+
+<footer>
+
+    Gul Job Radar · Personal Job Search Platform
+
+</footer>
+
+</body>
+</html>
