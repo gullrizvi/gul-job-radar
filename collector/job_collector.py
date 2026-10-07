@@ -1,13 +1,7 @@
 import os
 import requests
-from bs4 import BeautifulSoup
 from datetime import datetime, timezone
 from supabase import create_client
-
-
-# ============================================
-# GUL JOB RADAR - JOB COLLECTOR
-# ============================================
 
 SUPABASE_URL = os.environ.get("SUPABASE_URL")
 SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
@@ -18,10 +12,6 @@ if not SUPABASE_URL or not SUPABASE_KEY:
     )
 
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
-
-HEADERS = {
-    "User-Agent": "Gul Job Radar/1.0"
-}
 
 
 # ============================================
@@ -37,20 +27,24 @@ GREENHOUSE_BOARDS = [
 
 
 # ============================================
-# SAVE THE CHILDREN
+# WORLD BANK GROUP
 # ============================================
 
-SAVE_THE_CHILDREN_URL = (
-    "https://www.savethechildren.net/careers/apply"
+WORLD_BANK_BASE_URL = (
+    "https://worldbankgroup.csod.com"
+)
+
+WORLD_BANK_CAREER_URL = (
+    "https://worldbankgroup.csod.com/"
+    "ux/ats/careersite/1/home?c=worldbankgroup"
 )
 
 
 # ============================================
-# FETCH GREENHOUSE JOBS
+# GREENHOUSE FUNCTIONS
 # ============================================
 
 def fetch_greenhouse_jobs(board):
-
     token = board["token"]
 
     url = (
@@ -71,12 +65,7 @@ def fetch_greenhouse_jobs(board):
     return data.get("jobs", [])
 
 
-# ============================================
-# CONVERT GREENHOUSE JOB
-# ============================================
-
 def convert_greenhouse_job(job, board):
-
     location = ""
 
     if job.get("location"):
@@ -97,170 +86,55 @@ def convert_greenhouse_job(job, board):
         "experience_required": None,
         "application_deadline": None,
         "source": "Greenhouse",
-        "last_checked_at": datetime.now(timezone.utc).isoformat(),
+        "last_checked_at": datetime.now(
+            timezone.utc
+        ).isoformat(),
         "is_open": True
     }
 
 
 # ============================================
-# FETCH SAVE THE CHILDREN JOBS
+# WORLD BANK FUNCTIONS
 # ============================================
 
-def fetch_save_the_children_jobs():
+def fetch_world_bank_jobs():
+    print()
+    print("--------------------------------")
+    print("Searching: World Bank Group")
+    print("--------------------------------")
 
-    jobs = []
-    seen_urls = set()
+    headers = {
+        "User-Agent": (
+            "Mozilla/5.0 "
+            "(Windows NT 10.0; Win64; x64) "
+            "AppleWebKit/537.36 "
+            "(KHTML, like Gecko) "
+            "Chrome/153.0 Safari/537.36"
+        ),
+        "Accept": "application/json, text/plain, */*"
+    }
 
-    # The public careers page uses pagination.
-    # We check the first several pages so we do
-    # not only collect the jobs visible on page 1.
+    response = requests.get(
+        WORLD_BANK_CAREER_URL,
+        headers=headers,
+        timeout=30
+    )
 
-    for page in range(0, 10):
+    response.raise_for_status()
 
-        if page == 0:
-            url = SAVE_THE_CHILDREN_URL
-        else:
-            url = f"{SAVE_THE_CHILDREN_URL}?page={page}"
+    print(
+        f"World Bank careers page loaded: "
+        f"{response.status_code}"
+    )
 
-        print()
-        print("--------------------------------")
-        print(
-            f"Save the Children page: {page}"
-        )
-        print("--------------------------------")
-
-        response = requests.get(
-            url,
-            headers=HEADERS,
-            timeout=30
-        )
-
-        response.raise_for_status()
-
-        soup = BeautifulSoup(
-            response.text,
-            "html.parser"
-        )
-
-        detail_links = soup.select(
-            'a[href*="/careers/apply/details?jid="]'
-        )
-
-        if not detail_links:
-            print("No more Save the Children jobs found.")
-            break
-
-        page_new_jobs = 0
-
-        for link in detail_links:
-
-            href = link.get("href")
-
-            if not href:
-                continue
-
-            if href.startswith("/"):
-                job_url = (
-                    "https://www.savethechildren.net"
-                    + href
-                )
-            else:
-                job_url = href
-
-            if job_url in seen_urls:
-                continue
-
-            seen_urls.add(job_url)
-
-            title = link.get_text(
-                " ",
-                strip=True
-            )
-
-            if not title:
-                title = "Save the Children vacancy"
-
-            # Fetch the individual job page
-            # so we can store its description.
-
-            try:
-
-                detail_response = requests.get(
-                    job_url,
-                    headers=HEADERS,
-                    timeout=30
-                )
-
-                detail_response.raise_for_status()
-
-                detail_soup = BeautifulSoup(
-                    detail_response.text,
-                    "html.parser"
-                )
-
-                description = detail_soup.get_text(
-                    " ",
-                    strip=True
-                )
-
-            except Exception as error:
-
-                print(
-                    f"Could not read job details: "
-                    f"{error}"
-                )
-
-                description = ""
-
-            # Worldwide roles are potentially relevant
-            # to Pakistan, but we will NOT assume every
-            # Worldwide role is automatically eligible.
-            # Later matching logic will verify this.
-
-            remote_status = "Unknown"
-
-            if "Worldwide" in description:
-                remote_status = "Worldwide"
-
-            job_data = {
-                "title": title,
-                "company": "Save the Children International",
-                "job_url": job_url,
-                "location": "Worldwide"
-                    if "Worldwide" in description
-                    else "",
-                "remote_status": remote_status,
-                "employment_type": None,
-                "salary_min": None,
-                "salary_max": None,
-                "salary_currency": None,
-                "salary_period": None,
-                "description": description,
-                "experience_required": None,
-                "application_deadline": None,
-                "source": "Save the Children International",
-                "last_checked_at": (
-                    datetime.now(timezone.utc).isoformat()
-                ),
-                "is_open": True
-            }
-
-            jobs.append(job_data)
-            page_new_jobs += 1
-
-        print(
-            f"Found {page_new_jobs} new jobs."
-        )
-
-    return jobs
+    return []
 
 
 # ============================================
-# SAVE JOB
+# DATABASE FUNCTIONS
 # ============================================
 
 def save_job(job_data):
-
     job_url = job_data["job_url"]
 
     existing = (
@@ -272,29 +146,33 @@ def save_job(job_data):
     )
 
     if existing.data:
-
-        supabase \
-            .table("jobs") \
+        (
+            supabase
+            .table("jobs")
             .update({
-                "last_checked_at":
-                    job_data["last_checked_at"],
+                "last_checked_at": job_data[
+                    "last_checked_at"
+                ],
                 "is_open": True
-            }) \
-            .eq("job_url", job_url) \
+            })
+            .eq("job_url", job_url)
             .execute()
+        )
 
         return False
 
-    supabase \
-        .table("jobs") \
-        .insert(job_data) \
+    (
+        supabase
+        .table("jobs")
+        .insert(job_data)
         .execute()
+    )
 
     return True
 
 
 # ============================================
-# MAIN
+# MAIN COLLECTOR
 # ============================================
 
 def main():
@@ -302,120 +180,110 @@ def main():
     total_found = 0
     total_added = 0
 
-    # ------------------------------------------
+    # ----------------------------------------
     # GREENHOUSE
-    # ------------------------------------------
+    # ----------------------------------------
 
     for board in GREENHOUSE_BOARDS:
 
         print()
-        print("================================")
-        print(
-            f"Searching: {board['company']}"
-        )
-        print("================================")
+        print("--------------------------------")
+        print(f"Searching: {board['company']}")
+        print("--------------------------------")
 
-        jobs = fetch_greenhouse_jobs(board)
+        try:
+            jobs = fetch_greenhouse_jobs(board)
 
-        print(
-            f"Greenhouse returned {len(jobs)} jobs."
-        )
-
-        total_found += len(jobs)
-
-        for job in jobs:
-
-            job_data = convert_greenhouse_job(
-                job,
-                board
+            print(
+                f"Greenhouse returned "
+                f"{len(jobs)} jobs."
             )
 
-            if not job_data["job_url"]:
-                continue
+            total_found += len(jobs)
 
-            try:
+            for job in jobs:
 
-                was_added = save_job(job_data)
-
-                if was_added:
-
-                    total_added += 1
-
-                    print(
-                        f"Added: {job_data['title']}"
-                    )
-
-            except Exception as error:
-
-                print(
-                    f"Could not save "
-                    f"{job_data['title']}: {error}"
+                job_data = convert_greenhouse_job(
+                    job,
+                    board
                 )
 
-    # ------------------------------------------
-    # SAVE THE CHILDREN
-    # ------------------------------------------
+                if not job_data["job_url"]:
+                    continue
 
-    print()
-    print("================================")
-    print("Searching: Save the Children")
-    print("================================")
+                try:
+
+                    was_added = save_job(
+                        job_data
+                    )
+
+                    if was_added:
+
+                        total_added += 1
+
+                        print(
+                            f"Added: "
+                            f"{job_data['title']}"
+                        )
+
+                except Exception as error:
+
+                    print(
+                        f"Could not save "
+                        f"{job_data['title']}: "
+                        f"{error}"
+                    )
+
+        except Exception as error:
+
+            print(
+                f"Could not read "
+                f"{board['company']}: "
+                f"{error}"
+            )
+
+
+    # ----------------------------------------
+    # WORLD BANK GROUP
+    # ----------------------------------------
 
     try:
 
-        save_the_children_jobs = (
-            fetch_save_the_children_jobs()
+        world_bank_jobs = (
+            fetch_world_bank_jobs()
         )
 
         print(
-            "Save the Children returned "
-            f"{len(save_the_children_jobs)} jobs."
+            f"World Bank returned "
+            f"{len(world_bank_jobs)} jobs."
         )
 
         total_found += len(
-            save_the_children_jobs
+            world_bank_jobs
         )
-
-        for job_data in save_the_children_jobs:
-
-            try:
-
-                was_added = save_job(job_data)
-
-                if was_added:
-
-                    total_added += 1
-
-                    print(
-                        f"Added: "
-                        f"{job_data['title']}"
-                    )
-
-            except Exception as error:
-
-                print(
-                    f"Could not save "
-                    f"{job_data['title']}: "
-                    f"{error}"
-                )
 
     except Exception as error:
 
         print(
-            "Could not read Save the Children: "
+            f"Could not read World Bank Group: "
             f"{error}"
         )
 
-    # ------------------------------------------
+
+    # ----------------------------------------
     # COMPLETE
-    # ------------------------------------------
+    # ----------------------------------------
 
     print()
     print("================================")
     print("JOB RADAR COLLECTION COMPLETE")
     print("================================")
-    print(f"Jobs found: {total_found}")
-    print(f"Jobs added: {total_added}")
+    print(
+        f"Jobs found: {total_found}"
+    )
+    print(
+        f"Jobs added: {total_added}"
+    )
 
 
 if __name__ == "__main__":
