@@ -19,22 +19,27 @@ if not SUPABASE_URL or not SUPABASE_KEY:
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 
-# --------------------------------------------
-# Greenhouse companies to search
-# --------------------------------------------
+# ============================================
+# GREENHOUSE TEST SOURCES
+# ============================================
 
 GREENHOUSE_BOARDS = [
-    "acled",
+    {
+        "token": "stripe",
+        "company": "Stripe"
+    }
 ]
 
 
-# --------------------------------------------
-# Fetch jobs from one Greenhouse board
-# --------------------------------------------
+# ============================================
+# FETCH GREENHOUSE JOBS
+# ============================================
 
-def fetch_greenhouse_jobs(board_token):
+def fetch_greenhouse_jobs(board):
 
-    url = f"https://boards-api.greenhouse.io/v1/boards/{board_token}/jobs"
+    token = board["token"]
+
+    url = f"https://boards-api.greenhouse.io/v1/boards/{token}/jobs"
 
     response = requests.get(
         url,
@@ -49,23 +54,21 @@ def fetch_greenhouse_jobs(board_token):
     return data.get("jobs", [])
 
 
-# --------------------------------------------
-# Convert Greenhouse job into our database format
-# --------------------------------------------
+# ============================================
+# CONVERT JOB
+# ============================================
 
-def convert_job(job, board_token):
+def convert_job(job, board):
 
     location = ""
 
     if job.get("location"):
         location = job["location"].get("name", "")
 
-    job_url = job.get("absolute_url")
-
     return {
         "title": job.get("title", ""),
-        "company": board_token,
-        "job_url": job_url,
+        "company": board["company"],
+        "job_url": job.get("absolute_url"),
         "location": location,
         "remote_status": "Unknown",
         "employment_type": None,
@@ -78,13 +81,13 @@ def convert_job(job, board_token):
         "application_deadline": None,
         "source": "Greenhouse",
         "last_checked_at": datetime.now(timezone.utc).isoformat(),
-        "is_open": True,
+        "is_open": True
     }
 
 
-# --------------------------------------------
-# Save jobs to Supabase
-# --------------------------------------------
+# ============================================
+# SAVE JOB
+# ============================================
 
 def save_job(job_data):
 
@@ -99,17 +102,32 @@ def save_job(job_data):
     )
 
     if existing.data:
-        print(f"Already exists: {job_data['title']}")
-        return
 
-    supabase.table("jobs").insert(job_data).execute()
+        # Job already exists.
+        # Update the last checked time.
 
-    print(f"Added: {job_data['title']}")
+        supabase \
+            .table("jobs") \
+            .update({
+                "last_checked_at": job_data["last_checked_at"],
+                "is_open": True
+            }) \
+            .eq("job_url", job_url) \
+            .execute()
+
+        return False
+
+    supabase \
+        .table("jobs") \
+        .insert(job_data) \
+        .execute()
+
+    return True
 
 
-# --------------------------------------------
-# Main collector
-# --------------------------------------------
+# ============================================
+# MAIN
+# ============================================
 
 def main():
 
@@ -118,50 +136,52 @@ def main():
 
     for board in GREENHOUSE_BOARDS:
 
-        print(f"\nSearching Greenhouse board: {board}")
+        print()
+        print("--------------------------------")
+        print(
+            f"Searching: {board['company']}"
+        )
+        print("--------------------------------")
 
-        try:
+        jobs = fetch_greenhouse_jobs(board)
 
-            jobs = fetch_greenhouse_jobs(board)
+        print(
+            f"Greenhouse returned {len(jobs)} jobs."
+        )
 
-            print(f"Found {len(jobs)} jobs.")
+        total_found += len(jobs)
 
-            total_found += len(jobs)
+        for job in jobs:
 
-            for job in jobs:
-
-                job_data = convert_job(job, board)
-
-                try:
-
-                    before = (
-                        supabase
-                        .table("jobs")
-                        .select("id")
-                        .eq("job_url", job_data["job_url"])
-                        .execute()
-                    )
-
-                    if not before.data:
-
-                        save_job(job_data)
-                        total_added += 1
-
-                except Exception as error:
-
-                    print(
-                        f"Could not save job "
-                        f"{job_data.get('title', '')}: {error}"
-                    )
-
-        except Exception as error:
-
-            print(
-                f"Could not read Greenhouse board "
-                f"{board}: {error}"
+            job_data = convert_job(
+                job,
+                board
             )
 
-    print("\n================================")
+            if not job_data["job_url"]:
+                continue
+
+            try:
+
+                was_added = save_job(job_data)
+
+                if was_added:
+
+                    total_added += 1
+
+                    print(
+                        f"Added: {job_data['title']}"
+                    )
+
+            except Exception as error:
+
+                print(
+                    f"Could not save "
+                    f"{job_data['title']}: {error}"
+                )
+
+    print()
+    print("================================")
     print("JOB RADAR COLLECTION COMPLETE")
     print("================================")
     print(f"Jobs found: {total_found}")
